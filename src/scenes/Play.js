@@ -5,6 +5,7 @@ class Play extends Phaser.Scene {
   preload() {
     // load images/tile sprites
     this.load.image('rocket', './assets/rocket.png');
+    this.load.image('ufo', './assets/ufo.png');
     this.load.image('spaceship', './assets/spaceship.png');
     this.load.image('starfield', './assets/starfield.png');
     this.load.spritesheet('explosion', './assets/explosion.png', {frameWidth: 64, frameHeight: 32, startFrame: 0, endFrame: 9});
@@ -35,9 +36,10 @@ class Play extends Phaser.Scene {
     this.p2Rocket = new Rocket(this, 2 * game.config.width/3, game.config.height - borderUISize - borderPadding, 'rocket', 0, 1, keyLEFT, keyRIGHT, keySPACE).setOrigin(0.5, 0);
 
     // add spaceships (x3)
-    this.ship01 = new Spaceship(this, game.config.width + borderUISize*6, borderUISize*4, 'spaceship', 0, 30).setOrigin(0, 0);
-    this.ship02 = new Spaceship(this, game.config.width + borderUISize*3, borderUISize*5 + borderPadding*2, 'spaceship', 0, 20).setOrigin(0,0);
-    this.ship03 = new Spaceship(this, game.config.width, borderUISize*6 + borderPadding*4, 'spaceship', 0, 10).setOrigin(0,0);
+    this.ship01 = new Spaceship(this, game.config.width - borderUISize*3, borderUISize*5 + borderPadding*2, 'spaceship', 0, 30, game.settings.spaceshipSpeed).setOrigin(0, 0);
+    this.ship02 = new Spaceship(this, game.config.width - borderUISize*6, borderUISize*6 + borderPadding*4, 'spaceship', 0, 20, game.settings.spaceshipSpeed).setOrigin(0,0);
+    this.ship03 = new Spaceship(this, game.config.width - borderUISize*9, borderUISize*7 + borderPadding*6, 'spaceship', 0, 10, game.settings.spaceshipSpeed).setOrigin(0,0);
+    this.ufo = new Spaceship(this, game.config.width + borderUISize*3, borderUISize*4, 'ufo', 0, 50, game.settings.spaceshipSpeed * 2).setOrigin(0,0);
 
     // animation config
     this.anims.create({
@@ -76,6 +78,24 @@ class Play extends Phaser.Scene {
 
   update() {
 
+    //FIRE! text
+    if(Phaser.Input.Keyboard.JustDown(this.p1Rocket.keyFire) && !this.p1Rocket.isFiring){
+      this.scoreLeft.text = "FIRE!";
+      this.clock = this.time.delayedCall(1000, () => {
+        this.scoreLeft.text = this.p1Score;
+      }, null, this);
+      this.p1Rocket.isFiring = true;
+      this.p1Rocket.sfxRocket.play();
+    }
+    if(Phaser.Input.Keyboard.JustDown(this.p2Rocket.keyFire) && !this.p2Rocket.isFiring){
+      this.scoreRight.text = "FIRE!";
+      this.clock = this.time.delayedCall(1000, () => {
+        this.scoreRight.text = this.p2Score;
+      }, null, this);
+      this.p2Rocket.isFiring = true;
+      this.p2Rocket.sfxRocket.play();
+    }
+
     if(this.timeleft <= 0){
       this.timeleft = 0;
       let scoreConfig = {
@@ -102,6 +122,7 @@ class Play extends Phaser.Scene {
       this.ship01.update();
       this.ship02.update();
       this.ship03.update();
+      this.ufo.update();
     }
     if (this.gameOver && Phaser.Input.Keyboard.JustDown(keyR)) {
       this.scene.restart();
@@ -150,6 +171,14 @@ class Play extends Phaser.Scene {
     if (this.checkCollision(this.p2Rocket, this.ship01)) {
       this.p2Rocket.reset();
       this.shipExplode(this.ship01, 1);
+    }
+    if(this.checkCollision(this.p1Rocket, this.ufo)) {
+      this.p1Rocket.reset();
+      this.shipExplode(this.ufo, 0);
+    }
+    if(this.checkCollision(this.p2Rocket, this.ufo)) {
+      this.p2Rocket.reset();
+      this.shipExplode(this.ufo, 1);
     }
     if (this.gameOver && Phaser.Input.Keyboard.JustDown(keyLEFT)) {
       this.scene.start("menuScene");
